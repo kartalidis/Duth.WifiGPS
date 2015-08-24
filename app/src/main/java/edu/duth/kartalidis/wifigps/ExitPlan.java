@@ -608,48 +608,49 @@ public class ExitPlan {
                             finish[i+1][j+1]=1;
                             finish[i][j]=0;
 
-                        } else if ((ls<=(ln)&(le)&(lw)&(lnw)&(lne)&(lsw)&(lse))&(s==0)&(finish[i+1][j]==0)) {
-
-                            //euresh diadromis se periptwsh apotuxias
-                            finish[i+1][j]=1;
-                            finish[i][j]=0;
-
-                        } else if ((lw<=(ln)&(le)&(ls)&(lnw)&(lne)&(lsw)&(lse))&(w==0)&(finish[i][j-1]==0)) {
-
-                            finish[i][j-1]=1;
-                            finish[i][j]=0;
-
-                        } else if ((le<=(ln)&(lw)&(ls)&(lnw)&(lne)&(lsw)&(lse))&(e==0)&(finish[i][j+1]==0)) {
-
-                            finish[i][j+1]=1;
-                            finish[i][j]=0;
-
-                        } else if ((ln<=(lw)&(le)&(ls)&(lnw)&(lne)&(lsw)&(lse))&(n==0)&(finish[i-1][j]==0)) {
-
-                            finish[i-1][j]=1;
-                            finish[i][j]=0;
-
-                        } else if ((lnw<=(ln)&(le)&(lw)&(ls)&(lne)&(lsw)&(lse))&(nw==0)&(finish[i-1][j-1]==0)) {
-
-                            finish[i-1][j-1]=1;
-                            finish[i][j]=0;
-
-                        } else if ((lne<=(ln)&(le)&(lw)&(ls)&(lnw)&(lsw)&(lse))&(ne==0)&(finish[i-1][j+1]==0)) {
-
-                            finish[i-1][j+1]=1;
-                            finish[i][j]=0;
-
-                        } else if ((lsw<=(ln)&(le)&(lw)&(ls)&(lne)&(lnw)&(lse))&(sw==0)&(finish[i+1][j-1]==0)) {
-
-                            finish[i+1][j-1]=1;
-                            finish[i][j]=0;
-
-                        } else if ((lse<=(ln)&(le)&(lw)&(ls)&(lne)&(lnw)&(lsw))&(se==0)&(finish[i+1][j+1]==0)) {
-
-                            finish[i+1][j+1]=1;
-                            finish[i][j]=0;
-
                         }
+// else if ((ls<=(ln)&(le)&(lw)&(lnw)&(lne)&(lsw)&(lse))&(s==0)&(finish[i+1][j]==0)) {
+//
+//                            //euresh diadromis se periptwsh apotuxias
+//                            finish[i+1][j]=1;
+//                            finish[i][j]=0;
+//
+//                        } else if ((lw<=(ln)&(le)&(ls)&(lnw)&(lne)&(lsw)&(lse))&(w==0)&(finish[i][j-1]==0)) {
+//
+//                            finish[i][j-1]=1;
+//                            finish[i][j]=0;
+//
+//                        } else if ((le<=(ln)&(lw)&(ls)&(lnw)&(lne)&(lsw)&(lse))&(e==0)&(finish[i][j+1]==0)) {
+//
+//                            finish[i][j+1]=1;
+//                            finish[i][j]=0;
+//
+//                        } else if ((ln<=(lw)&(le)&(ls)&(lnw)&(lne)&(lsw)&(lse))&(n==0)&(finish[i-1][j]==0)) {
+//
+//                            finish[i-1][j]=1;
+//                            finish[i][j]=0;
+//
+//                        } else if ((lnw<=(ln)&(le)&(lw)&(ls)&(lne)&(lsw)&(lse))&(nw==0)&(finish[i-1][j-1]==0)) {
+//
+//                            finish[i-1][j-1]=1;
+//                            finish[i][j]=0;
+//
+//                        } else if ((lne<=(ln)&(le)&(lw)&(ls)&(lnw)&(lsw)&(lse))&(ne==0)&(finish[i-1][j+1]==0)) {
+//
+//                            finish[i-1][j+1]=1;
+//                            finish[i][j]=0;
+//
+//                        } else if ((lsw<=(ln)&(le)&(lw)&(ls)&(lne)&(lnw)&(lse))&(sw==0)&(finish[i+1][j-1]==0)) {
+//
+//                            finish[i+1][j-1]=1;
+//                            finish[i][j]=0;
+//
+//                        } else if ((lse<=(ln)&(le)&(lw)&(ls)&(lne)&(lnw)&(lsw))&(se==0)&(finish[i+1][j+1]==0)) {
+//
+//                            finish[i+1][j+1]=1;
+//                            finish[i][j]=0;
+//
+//                        }
                     }
 
                 }
