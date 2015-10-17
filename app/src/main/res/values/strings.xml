@@ -4,5 +4,7 @@
     <string name="app_name">WiFiGPS</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="compass">Compass</string>
+    <string name="trilateration">Trilateration</string>
 
 </resources>

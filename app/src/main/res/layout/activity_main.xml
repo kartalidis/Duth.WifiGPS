@@ -19,6 +19,7 @@
         android:src="@drawable/pointer"
         android:id="@+id/pointer"/>
 
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -37,5 +38,24 @@
         android:text="Navigate!"
         style="@style/AppTheme"
         android:id="@+id/startNavigation"/>
+
+    <RadioGroup
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/mapSelector"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="70dp"
+        android:checkedButton="@+id/compassNavi">
+        <RadioButton android:id="@+id/compassNavi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/trilateration"
+            android:onClick="onRadioButtonClicked"/>
+        <RadioButton android:id="@+id/trilatNavi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/compass"
+            android:onClick="onRadioButtonClicked"/>
+    </RadioGroup>
 
 </RelativeLayout>

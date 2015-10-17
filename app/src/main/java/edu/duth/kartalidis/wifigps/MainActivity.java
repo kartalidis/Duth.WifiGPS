@@ -25,6 +25,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -336,6 +337,22 @@ public class MainActivity extends Activity implements SensorEventListener {
         sensorManager.unregisterListener(this);
     }
 
+    public void onRadioButtonClicked(View view) {
+
+        boolean checked = ((RadioButton) view).isChecked();
+
+        switch (view.getId()) {
+            case R.id.compassNavi:
+                if (checked)
+                    //compass code here
+                break;
+            case R.id.trilatNavi:
+                if (checked)
+                    //trilateration code here
+                break;
+        }
+    }
+
     public void mapChooser () {
 
         final ImageView mapback = (ImageView) findViewById(R.id.map);
@@ -399,6 +416,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     public void hideUIElements() {
         findViewById(R.id.mapSelector).setVisibility(View.GONE);
+        findViewById(R.id.compassNavi).setVisibility(View.GONE);
+        findViewById(R.id.trilatNavi).setVisibility(View.GONE);
         findViewById(R.id.startNavigation).setVisibility(View.GONE);
     }
 
