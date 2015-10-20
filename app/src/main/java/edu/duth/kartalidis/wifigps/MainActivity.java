@@ -87,8 +87,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 
                 SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
                 Editor editor = sharedPreferences.edit();
-                editor.putInt("posX", x);
-                editor.putInt("posY", y);
+                editor.putInt("posX", 4);
+                editor.putInt("posY", 5);
 
 
                 editor.putFloat("startCompass", currentPosition);
@@ -261,9 +261,12 @@ public class MainActivity extends Activity implements SensorEventListener {
                                         int posY = sharedPreferences.getInt("posY", 0);
 
 
+
                                         if(meanMovedDistanceInPixel != 0) {
                                             int[] newCoordinates = new int[2];
-                                            newCoordinates = Position.getNewPosition(posX, posY, angle, meanMovedDistanceInPixel);
+//                                            newCoordinates = Position.getNewPosition(posX, posY, angle, meanMovedDistanceInPixel);
+
+                                            newCoordinates = Position.getNewPosition(posX, posY, angle, meanMovedDistance);
 
                                             int newX = newCoordinates[0];
                                             int newY = newCoordinates[1];
@@ -285,6 +288,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 
                                     String values = "";
 
+                                    values += "X " + sharedPreferences.getInt("posX", 0) + "\n";
+                                    values += "Y " + sharedPreferences.getInt("posY", 0) + "\n";
                                     values += "startangle " + String.valueOf(Math.abs(sharedPreferences.getFloat("startCompass", (float)0.0))) + "\n";
                                     values += "currentposition " + String.valueOf(currentPosition) + "\n";
                                     values += "angle " + String.valueOf(angle) + "\n";
