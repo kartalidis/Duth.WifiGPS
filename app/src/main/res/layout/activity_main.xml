@@ -10,6 +10,10 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:id="@+id/map"/>
+    <ImageView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/route"/>
 
     <ImageView
         android:layout_width="wrap_content"
@@ -39,22 +43,37 @@
         style="@style/AppTheme"
         android:id="@+id/startNavigation"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="16dp"
+        android:text="Find the Exit!"
+        style="@style/AppTheme"
+        android:id="@+id/startExit"/>
+
     <RadioGroup
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/mapSelector"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="70dp"
-        android:checkedButton="@+id/compassNavi">
-        <RadioButton android:id="@+id/compassNavi"
+        android:checkedButton="@+id/meansNavi">
+        <RadioButton android:id="@+id/meansNavi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/trilateration"
+            android:text="@string/signalmeans"
             android:onClick="onRadioButtonClicked"/>
         <RadioButton android:id="@+id/trilatNavi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/compass"
+            android:text="@string/trilateration"
+            android:onClick="onRadioButtonClicked"/>
+        <RadioButton android:id="@+id/centroidNavi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/enhancedweighted"
             android:onClick="onRadioButtonClicked"/>
     </RadioGroup>
 

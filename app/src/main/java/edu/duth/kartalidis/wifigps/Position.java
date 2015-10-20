@@ -6,13 +6,16 @@ package edu.duth.kartalidis.wifigps;
 public class Position {
 
     public static double getDistance (double signalStrength, double frequency) {
-        double exp = (27.55- 20 * Math.log10(frequency) -signalStrength) / 20;
+//        double exp = (27.55- 20 * Math.log10(frequency) -signalStrength) / 20;
+        double exp = (-52.5 -signalStrength) / 12.96;
         return Math.pow(10.0, exp);
     }
 
     public static double getNewDistance(double newRSS, double oldRSS, double frequency) {
-        double expOld = (27.55 - 20 * Math.log10(frequency) - oldRSS) / 20;
-        double expNew = (27.55 - 20 * Math.log10(frequency) - newRSS) / 20;
+//        double expOld = (27.55 - 20 * Math.log10(frequency) - oldRSS) / 20;
+//        double expNew = (27.55 - 20 * Math.log10(frequency) - newRSS) / 20;
+        double expOld = (-52.5 -oldRSS) / 12.96;
+        double expNew = (-52.5 -newRSS) / 12.96;
         return Math.abs(Math.pow(10.0, expNew) - Math.pow(10.0, expOld));
 
     }

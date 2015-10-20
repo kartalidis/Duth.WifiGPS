@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -41,6 +40,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     public static float currentPosition = 0;
     private boolean running = true;
     private int correction;
+    private int naviMethod;
     private float[] magData = new float[3];
     private float[] accData = new float[3];
     private float[] mR = new float[16];
@@ -56,7 +56,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         setContentView(R.layout.activity_main);
 
         final RelativeLayout entire_view = (RelativeLayout) findViewById(R.id.entire_view);
-        entire_view.setOnTouchListener(new View.OnTouchListener(){
+        entire_view.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 initialPosition((int) event.getX(), (int) event.getY());
@@ -65,34 +65,80 @@ public class MainActivity extends Activity implements SensorEventListener {
         });
 
         final Button startnavigation = (Button) findViewById(R.id.startNavigation);
-        startnavigation.setOnClickListener(new View.OnClickListener(){
+        startnavigation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ImageView imageView = (ImageView)findViewById(R.id.pointer);
+                ImageView imageView = (ImageView) findViewById(R.id.pointer);
                 RelativeLayout.LayoutParams layoutparams = (RelativeLayout.LayoutParams) imageView.getLayoutParams();
                 int x = layoutparams.leftMargin;
                 int y = layoutparams.topMargin;
 
-                if(x==0 && y==0) {
+                if (x == 0 && y == 0) {
                     Display display = getWindowManager().getDefaultDisplay();
                     Point size = new Point();
                     display.getSize(size);
-                    x = size.x/2;
-                    y = size.y/2;
+                    x = size.x / 2;
+                    y = size.y / 2;
                 }
 
-                SharedPreferences sharedPreferences = PreferenceManager .getDefaultSharedPreferences(getBaseContext());
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
                 Editor editor = sharedPreferences.edit();
                 editor.putInt("posX", x);
                 editor.putInt("posY", y);
-
 
 
                 editor.putFloat("startCompass", currentPosition);
                 editor.commit();
 
 
-                startNavigation();
+                if (naviMethod==1) {
+                    startMeansNavigation();
+                } else if (naviMethod==2) {
+                    startTrilaterationNavigation();
+                } else {
+                    startCentroidNavigation();
+                }
+
+            }
+        });
+
+        final Button startexit = (Button) findViewById(R.id.startExit);
+        startexit.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                int[] trace = new int [2500];
+                trace = ExitPlan.wayOut(2, 4);
+                int width = 50;
+                int height = 50;
+                Bitmap route = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                route.setPixels(trace, 0, width, 0, 0, width, height);
+                final ImageView routeview = (ImageView) findViewById(R.id.route);
+                routeview.setImageBitmap(route);
+//                ImageView imageView = (ImageView)findViewById(R.id.pointer);
+//                RelativeLayout.LayoutParams layoutparams = (RelativeLayout.LayoutParams) imageView.getLayoutParams();
+//                int x = layoutparams.leftMargin;
+//                int y = layoutparams.topMargin;
+//
+//                if(x==0 && y==0) {
+//                    Display display = getWindowManager().getDefaultDisplay();
+//                    Point size = new Point();
+//                    display.getSize(size);
+//                    x = size.x/2;
+//                    y = size.y/2;
+//                }
+//
+//                SharedPreferences sharedPreferences = PreferenceManager .getDefaultSharedPreferences(getBaseContext());
+//                Editor editor = sharedPreferences.edit();
+//                editor.putInt("posX", x);
+//                editor.putInt("posY", y);
+//
+//
+//
+//                editor.putFloat("startCompass", currentPosition);
+//                editor.commit();
+//
+//
+//                startNavigation();
 
             }
         });
@@ -101,6 +147,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         findViewById(R.id.pointer).setVisibility(View.GONE);
         findViewById(R.id.startNavigation).setVisibility(View.GONE);
+        findViewById(R.id.startExit).setVisibility(View.GONE);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String mapName = sharedPreferences.getString("imageUri", "false");
@@ -119,9 +166,10 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     }
 
-    public void startNavigation() {
+    public void startMeansNavigation() {
 
         findViewById(R.id.startNavigation).setVisibility(View.GONE);
+        findViewById(R.id.startExit).setVisibility(View.VISIBLE);
 
         Thread thread = new Thread() {
 
@@ -161,6 +209,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                                     ArrayList<WiFiData> oldScan = WiFiScanner.getOldWifiList();
                                     ArrayList<WiFiData> newScan = WiFiScanner.getWifiList();
                                     ArrayList<WiFiData> intersection = new ArrayList<WiFiData>();
+
 
                                     for(int m=0;m<oldScan.size();m++) {
 
@@ -239,6 +288,400 @@ public class MainActivity extends Activity implements SensorEventListener {
 
                                     for(int j=0;j<oldScan.size();j++) {
                                         values += oldScan.get(j).getBSSID()+ ", " + oldScan.get(j).getRSS()+"\n";
+                                        String mac = oldScan.get(j).getBSSID();
+                                        if (oldScan.get(j).getBSSID().equals("ce:d1:59:4f:97:f5")) {
+                                            values += "yay" + "\n";
+                                        }
+                                    }
+
+                                    values += "-----------\n";
+
+                                    for(int j=0;j<newScan.size();j++) {
+                                        double distance = Position.getDistance(newScan.get(j).getRSS(),newScan.get(j).getFrequency());
+                                        values += newScan.get(j).getFrequency()+ ", " + newScan.get(j).getRSS()+ ", " + distance + "\n";
+                                    }
+
+                                    Toast.makeText(getApplicationContext(), String.valueOf(values), Toast.LENGTH_SHORT).show();
+
+                                }
+
+                                findViewById(R.id.pointer).setVisibility(View.VISIBLE);
+                            }
+                        });
+
+                    }
+
+
+
+
+                    try {
+                        Thread.sleep(1000L);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    i++;
+                }
+            }
+
+        };
+
+        thread.start();
+
+    }
+
+    public void startTrilaterationNavigation() {
+
+        findViewById(R.id.startNavigation).setVisibility(View.GONE);
+        findViewById(R.id.startExit).setVisibility(View.VISIBLE);
+
+        Thread thread = new Thread() {
+
+            public void run() {
+                int i = 0;
+
+                WiFiScanner.WiFiScanner(activity);
+
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(globalcontext);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt("signalCounter", 0);
+                editor.commit();
+
+                while(running) {
+                    if(i%2 == 0) {
+                        activity.runOnUiThread(new Runnable() {
+                            public void run() {
+
+                                findViewById(R.id.pointer).setVisibility(View.GONE);
+                            }
+                        });
+                    } else {
+                        activity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                int signalCounter = WiFiScanner.getCounter();
+                                double d1 = 0;
+                                double d2 = 0;
+                                double dr = 50;
+
+                                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(globalcontext);
+                                int oldCounter = sharedPreferences.getInt("signalCounter", 0);
+
+
+
+                                if(signalCounter > oldCounter) {
+                                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                                    editor.putInt("signalCounter", signalCounter);
+                                    editor.commit();
+
+                                    ArrayList<WiFiData> oldScan = WiFiScanner.getOldWifiList();
+                                    ArrayList<WiFiData> newScan = WiFiScanner.getWifiList();
+                                    ArrayList<WiFiData> intersection = new ArrayList<WiFiData>();
+
+                                    for(int m=0; m<newScan.size(); m++) {
+                                        if (newScan.get(m).getBSSID().equals("router1")) {
+                                            d1 = Position.getDistance(newScan.get(m).getRSS(),newScan.get(m).getFrequency());
+                                        }
+                                        if (newScan.get(m).getBSSID().equals("router2")) {
+                                            d2 = Position.getDistance(newScan.get(m).getRSS(),newScan.get(m).getFrequency());
+                                        }
+                                    }
+
+                                    if ((d1 != 0) & (d2 != 0)) {
+                                        double s = (d1 + d2 +dr)/2;
+                                        double area = Math.sqrt(s*(s-d1)*(s-d2)*(s-dr));
+                                        double newY = (2*area)/dr;
+                                        double newX = Math.sqrt(d1*d1-newY*newY);
+                                    }
+
+
+
+                                    //
+                                    for(int m=0;m<oldScan.size();m++) {
+
+                                        if(oldScan.get(m).getRSS() < -64) {
+                                            continue;
+                                        }
+
+                                        for(int n=0;n<newScan.size();n++) {
+                                            if(oldScan.get(m).getBSSID().equals(newScan.get(n).getBSSID())) {
+                                                intersection.add(oldScan.get(m));
+                                                intersection.add(newScan.get(n));
+                                            }
+                                        }
+                                    }
+
+                                    int totalValues = 0;
+                                    double summarizedDistance = 0;
+
+                                    int p = 0;
+                                    while(p < intersection.size()) {
+
+                                        summarizedDistance += Position.getNewDistance(intersection.get(p + 1).getRSS(), intersection.get(p).getRSS(), intersection.get(p).getFrequency());
+
+
+                                        totalValues++;
+                                        p=p+2;
+                                    }
+
+                                    int meanMovedDistanceInPixel = 0;
+                                    float angle = 0;
+
+                                    if(totalValues > 0) {
+                                        double meanMovedDistance = summarizedDistance/totalValues;
+
+                                        angle = currentPosition - sharedPreferences.getFloat("startCompass", (float)0.0);
+                                        if(angle < 0) {
+                                            angle = 360+angle;
+                                        }
+
+
+                                        meanMovedDistanceInPixel = (1080/5) * (int)meanMovedDistance;
+
+
+                                        int posX = sharedPreferences.getInt("posX", 0);
+                                        int posY = sharedPreferences.getInt("posY", 0);
+
+
+                                        if(meanMovedDistanceInPixel != 0) {
+                                            int[] newCoordinates = new int[2];
+                                            newCoordinates = Position.getNewPosition(posX, posY, angle, meanMovedDistanceInPixel);
+
+                                            int newX = newCoordinates[0];
+                                            int newY = newCoordinates[1];
+
+                                            editor.putInt("posX", newX);
+                                            editor.putInt("posY", newY);
+                                            editor.commit();
+
+                                            setPosition(newX, newY);
+                                        } else {
+                                            setPosition(posX, posY);
+                                        }
+
+                                    }
+
+
+
+
+
+                                    String values = "";
+
+                                    values += "startangle " + String.valueOf(Math.abs(sharedPreferences.getFloat("startCompass", (float)0.0))) + "\n";
+                                    values += "currentposition " + String.valueOf(currentPosition) + "\n";
+                                    values += "angle " + String.valueOf(angle) + "\n";
+                                    values += String.valueOf(meanMovedDistanceInPixel) + "\n";
+
+                                    for(int j=0;j<oldScan.size();j++) {
+                                        values += oldScan.get(j).getBSSID()+ ", " + oldScan.get(j).getRSS()+"\n";
+                                        String mac = oldScan.get(j).getBSSID();
+                                        if (oldScan.get(j).getBSSID().equals("ce:d1:59:4f:97:f5")) {
+                                            values += "yay" + "\n";
+                                        }
+                                    }
+
+                                    values += "-----------\n";
+
+                                    for(int j=0;j<newScan.size();j++) {
+                                        double distance = Position.getDistance(newScan.get(j).getRSS(),newScan.get(j).getFrequency());
+                                        values += newScan.get(j).getFrequency()+ ", " + newScan.get(j).getRSS()+ ", " + distance + "\n";
+                                    }
+
+                                    Toast.makeText(getApplicationContext(), String.valueOf(values), Toast.LENGTH_SHORT).show();
+
+                                }
+
+                                findViewById(R.id.pointer).setVisibility(View.VISIBLE);
+                            }
+                        });
+
+                    }
+
+
+
+
+                    try {
+                        Thread.sleep(1000L);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    i++;
+                }
+            }
+
+        };
+
+        thread.start();
+
+    }
+
+    public void startCentroidNavigation() {
+
+        findViewById(R.id.startNavigation).setVisibility(View.GONE);
+        findViewById(R.id.startExit).setVisibility(View.VISIBLE);
+
+        Thread thread = new Thread() {
+
+            public void run() {
+                int i = 0;
+
+                WiFiScanner.WiFiScanner(activity);
+
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(globalcontext);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt("signalCounter", 0);
+                editor.commit();
+
+                while(running) {
+                    if(i%2 == 0) {
+                        activity.runOnUiThread(new Runnable() {
+                            public void run() {
+
+                                findViewById(R.id.pointer).setVisibility(View.GONE);
+                            }
+                        });
+                    } else {
+                        activity.runOnUiThread(new Runnable() {
+                            public void run() {
+                                int signalCounter = WiFiScanner.getCounter();
+
+                                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(globalcontext);
+                                int oldCounter = sharedPreferences.getInt("signalCounter", 0);
+                                double rssi1 = 0;
+                                double x1 = 0;
+                                double y1 = 0;
+                                double x2 = 0;
+                                double y2 = 0;
+                                double x3 = 0;
+                                double y3 = 0;
+                                double x4 = 0;
+                                double y4 = 0;
+                                double rssi2 = 0;
+                                double rssi3 = 0;
+                                double rssi4 = 0;
+
+
+
+                                if(signalCounter > oldCounter) {
+                                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                                    editor.putInt("signalCounter", signalCounter);
+                                    editor.commit();
+
+                                    ArrayList<WiFiData> oldScan = WiFiScanner.getOldWifiList();
+                                    ArrayList<WiFiData> newScan = WiFiScanner.getWifiList();
+                                    ArrayList<WiFiData> intersection = new ArrayList<WiFiData>();
+
+                                    for(int m=0; m<newScan.size(); m++) {
+                                        if (newScan.get(m).getBSSID().equals("router1")) {
+                                            rssi1 = newScan.get(m).getRSS();
+                                        }
+                                        if (newScan.get(m).getBSSID().equals("router2")) {
+                                            rssi2 = newScan.get(m).getRSS();
+                                        }
+                                        if (newScan.get(m).getBSSID().equals("router3")) {
+                                            rssi3 = newScan.get(m).getRSS();
+                                        }
+                                        if (newScan.get(m).getBSSID().equals("router4")) {
+                                            rssi4 = newScan.get(m).getRSS();
+                                        }
+                                    }
+
+                                    if ((rssi1 != 0) & (rssi2 != 0) & (rssi3 != 0) & (rssi4 != 0)) {
+
+                                        double w1 = Centroid.weight(rssi1, rssi2, rssi3, rssi4);
+                                        double w2 = Centroid.weight(rssi2, rssi1, rssi3, rssi4);
+                                        double w3 = Centroid.weight(rssi3, rssi2, rssi1, rssi4);
+                                        double w4 = Centroid.weight(rssi4, rssi2, rssi3, rssi1);
+
+                                        double w1e = Centroid.weightEnh(w1, newScan.size());
+                                        double w2e = Centroid.weightEnh(w2, newScan.size());
+                                        double w3e = Centroid.weightEnh(w3, newScan.size());
+                                        double w4e = Centroid.weightEnh(w4, newScan.size());
+
+                                        double newX = (w1e*x1+w2e*x2+w3e*x3+w4e*x4)/(w1e+w2e+w3e+w4e);
+                                        double newY =(w1e*y1+w2e*y2+w3e*y3+w4e*y4)/(w1e+w2e+w3e+w4e);
+
+                                    }
+
+                                    for(int m=0;m<oldScan.size();m++) {
+
+                                        if(oldScan.get(m).getRSS() < -64) {
+                                            continue;
+                                        }
+
+                                        for(int n=0;n<newScan.size();n++) {
+                                            if(oldScan.get(m).getBSSID().equals(newScan.get(n).getBSSID())) {
+                                                intersection.add(oldScan.get(m));
+                                                intersection.add(newScan.get(n));
+                                            }
+                                        }
+                                    }
+
+                                    int totalValues = 0;
+                                    double summarizedDistance = 0;
+
+                                    int p = 0;
+                                    while(p < intersection.size()) {
+
+                                        summarizedDistance += Position.getNewDistance(intersection.get(p + 1).getRSS(), intersection.get(p).getRSS(), intersection.get(p).getFrequency());
+
+
+                                        totalValues++;
+                                        p=p+2;
+                                    }
+
+                                    int meanMovedDistanceInPixel = 0;
+                                    float angle = 0;
+
+                                    if(totalValues > 0) {
+                                        double meanMovedDistance = summarizedDistance/totalValues;
+
+                                        angle = currentPosition - sharedPreferences.getFloat("startCompass", (float)0.0);
+                                        if(angle < 0) {
+                                            angle = 360+angle;
+                                        }
+
+
+                                        meanMovedDistanceInPixel = (1080/5) * (int)meanMovedDistance;
+
+
+                                        int posX = sharedPreferences.getInt("posX", 0);
+                                        int posY = sharedPreferences.getInt("posY", 0);
+
+
+                                        if(meanMovedDistanceInPixel != 0) {
+                                            int[] newCoordinates = new int[2];
+                                            newCoordinates = Position.getNewPosition(posX, posY, angle, meanMovedDistanceInPixel);
+
+                                            int newX = newCoordinates[0];
+                                            int newY = newCoordinates[1];
+
+                                            editor.putInt("posX", newX);
+                                            editor.putInt("posY", newY);
+                                            editor.commit();
+
+                                            setPosition(newX, newY);
+                                        } else {
+                                            setPosition(posX, posY);
+                                        }
+
+                                    }
+
+
+
+
+
+                                    String values = "";
+
+                                    values += "startangle " + String.valueOf(Math.abs(sharedPreferences.getFloat("startCompass", (float)0.0))) + "\n";
+                                    values += "currentposition " + String.valueOf(currentPosition) + "\n";
+                                    values += "angle " + String.valueOf(angle) + "\n";
+                                    values += String.valueOf(meanMovedDistanceInPixel) + "\n";
+
+                                    for(int j=0;j<oldScan.size();j++) {
+                                        values += oldScan.get(j).getBSSID()+ ", " + oldScan.get(j).getRSS()+"\n";
+                                        String mac = oldScan.get(j).getBSSID();
+                                        if (oldScan.get(j).getBSSID().equals("ce:d1:59:4f:97:f5")) {
+                                            values += "yay" + "\n";
+                                        }
                                     }
 
                                     values += "-----------\n";
@@ -342,14 +785,18 @@ public class MainActivity extends Activity implements SensorEventListener {
         boolean checked = ((RadioButton) view).isChecked();
 
         switch (view.getId()) {
-            case R.id.compassNavi:
+            case R.id.meansNavi:
                 if (checked)
-                    //compass code here
+                    naviMethod = 1;
                 break;
             case R.id.trilatNavi:
                 if (checked)
-                    //trilateration code here
+                    naviMethod = 2;
                 break;
+            case R.id.centroidNavi:
+                if (checked)
+                    naviMethod = 3;
+                    break;
         }
     }
 
@@ -419,6 +866,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         findViewById(R.id.compassNavi).setVisibility(View.GONE);
         findViewById(R.id.trilatNavi).setVisibility(View.GONE);
         findViewById(R.id.startNavigation).setVisibility(View.GONE);
+        findViewById(R.id.startExit).setVisibility(View.GONE);
     }
 
     public void loadSettings() throws FileNotFoundException, IOException {
