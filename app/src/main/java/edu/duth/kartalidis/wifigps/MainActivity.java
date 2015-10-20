@@ -48,6 +48,10 @@ public class MainActivity extends Activity implements SensorEventListener {
     private float[] mOrientation = new float[3];
     private SensorManager sensorManager = null;
     private Context globalcontext;
+    private String linksys = "00:14:bf:f2:9d:61";
+    private String netgear = "00:26:f2:3e:36:4e";
+    private String fritz = "00:15:0c:83:2a:22";
+    private String technicolor = "ce:d1:59:4f:97:f5";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -360,7 +364,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                                 int signalCounter = WiFiScanner.getCounter();
                                 double d1 = 0;
                                 double d2 = 0;
-                                double dr = 50;
+                                double dr = 2;
 
                                 SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(globalcontext);
                                 int oldCounter = sharedPreferences.getInt("signalCounter", 0);
@@ -374,120 +378,51 @@ public class MainActivity extends Activity implements SensorEventListener {
 
                                     ArrayList<WiFiData> oldScan = WiFiScanner.getOldWifiList();
                                     ArrayList<WiFiData> newScan = WiFiScanner.getWifiList();
-                                    ArrayList<WiFiData> intersection = new ArrayList<WiFiData>();
 
-                                    for(int m=0; m<newScan.size(); m++) {
-                                        if (newScan.get(m).getBSSID().equals("router1")) {
-                                            d1 = Position.getDistance(newScan.get(m).getRSS(),newScan.get(m).getFrequency());
+
+                                    for (int m = 0; m < newScan.size(); m++) {
+                                        if (newScan.get(m).getBSSID().equals(linksys)) {
+                                            d1 = Position.getDistance(newScan.get(m).getRSS(), newScan.get(m).getFrequency());
                                         }
-                                        if (newScan.get(m).getBSSID().equals("router2")) {
-                                            d2 = Position.getDistance(newScan.get(m).getRSS(),newScan.get(m).getFrequency());
+                                        if (newScan.get(m).getBSSID().equals(netgear)) {
+                                            d2 = Position.getDistance(newScan.get(m).getRSS(), newScan.get(m).getFrequency());
                                         }
                                     }
 
                                     if ((d1 != 0) & (d2 != 0)) {
-                                        double s = (d1 + d2 +dr)/2;
-                                        double area = Math.sqrt(s*(s-d1)*(s-d2)*(s-dr));
-                                        double newY = (2*area)/dr;
-                                        double newX = Math.sqrt(d1*d1-newY*newY);
-                                    }
+                                        double s = (d1 + d2 + dr) / 2;
+                                        double area = Math.sqrt(s * (s - d1) * (s - d2) * (s - dr));
+                                        double newY = (2 * area) / dr;
+                                        double newX = Math.sqrt(d1 * d1 - newY * newY);
 
+                                        String values = "";
 
+                                        values += "d1 " + d1 + "\n";
+                                        values += "d2 " + d2 + "\n";
+                                        values += "X: " + newX + "\n";
+                                        values += "Y: " + newY + "\n";
 
-                                    //
-                                    for(int m=0;m<oldScan.size();m++) {
-
-                                        if(oldScan.get(m).getRSS() < -64) {
-                                            continue;
-                                        }
-
-                                        for(int n=0;n<newScan.size();n++) {
-                                            if(oldScan.get(m).getBSSID().equals(newScan.get(n).getBSSID())) {
-                                                intersection.add(oldScan.get(m));
-                                                intersection.add(newScan.get(n));
+                                        for (int j = 0; j < oldScan.size(); j++) {
+                                            values += oldScan.get(j).getBSSID() + ", " + oldScan.get(j).getRSS() + "\n";
+                                            String mac = oldScan.get(j).getBSSID();
+                                            if (oldScan.get(j).getBSSID().equals("ce:d1:59:4f:97:f5")) {
+                                                values += "yay" + "\n";
                                             }
                                         }
-                                    }
 
-                                    int totalValues = 0;
-                                    double summarizedDistance = 0;
+                                        values += "-----------\n";
 
-                                    int p = 0;
-                                    while(p < intersection.size()) {
-
-                                        summarizedDistance += Position.getNewDistance(intersection.get(p + 1).getRSS(), intersection.get(p).getRSS(), intersection.get(p).getFrequency());
-
-
-                                        totalValues++;
-                                        p=p+2;
-                                    }
-
-                                    int meanMovedDistanceInPixel = 0;
-                                    float angle = 0;
-
-                                    if(totalValues > 0) {
-                                        double meanMovedDistance = summarizedDistance/totalValues;
-
-                                        angle = currentPosition - sharedPreferences.getFloat("startCompass", (float)0.0);
-                                        if(angle < 0) {
-                                            angle = 360+angle;
+                                        for (int j = 0; j < newScan.size(); j++) {
+                                            double distance = Position.getDistance(newScan.get(j).getRSS(), newScan.get(j).getFrequency());
+                                            values += newScan.get(j).getFrequency() + ", " + newScan.get(j).getRSS() + ", " + distance + "\n";
                                         }
 
-
-                                        meanMovedDistanceInPixel = (1080/5) * (int)meanMovedDistance;
-
-
-                                        int posX = sharedPreferences.getInt("posX", 0);
-                                        int posY = sharedPreferences.getInt("posY", 0);
-
-
-                                        if(meanMovedDistanceInPixel != 0) {
-                                            int[] newCoordinates = new int[2];
-                                            newCoordinates = Position.getNewPosition(posX, posY, angle, meanMovedDistanceInPixel);
-
-                                            int newX = newCoordinates[0];
-                                            int newY = newCoordinates[1];
-
-                                            editor.putInt("posX", newX);
-                                            editor.putInt("posY", newY);
-                                            editor.commit();
-
-                                            setPosition(newX, newY);
-                                        } else {
-                                            setPosition(posX, posY);
-                                        }
-
+                                        Toast.makeText(getApplicationContext(), String.valueOf(values), Toast.LENGTH_SHORT).show();
                                     }
-
-
-
-
-
-                                    String values = "";
-
-                                    values += "startangle " + String.valueOf(Math.abs(sharedPreferences.getFloat("startCompass", (float)0.0))) + "\n";
-                                    values += "currentposition " + String.valueOf(currentPosition) + "\n";
-                                    values += "angle " + String.valueOf(angle) + "\n";
-                                    values += String.valueOf(meanMovedDistanceInPixel) + "\n";
-
-                                    for(int j=0;j<oldScan.size();j++) {
-                                        values += oldScan.get(j).getBSSID()+ ", " + oldScan.get(j).getRSS()+"\n";
-                                        String mac = oldScan.get(j).getBSSID();
-                                        if (oldScan.get(j).getBSSID().equals("ce:d1:59:4f:97:f5")) {
-                                            values += "yay" + "\n";
-                                        }
-                                    }
-
-                                    values += "-----------\n";
-
-                                    for(int j=0;j<newScan.size();j++) {
-                                        double distance = Position.getDistance(newScan.get(j).getRSS(),newScan.get(j).getFrequency());
-                                        values += newScan.get(j).getFrequency()+ ", " + newScan.get(j).getRSS()+ ", " + distance + "\n";
-                                    }
-
-                                    Toast.makeText(getApplicationContext(), String.valueOf(values), Toast.LENGTH_SHORT).show();
 
                                 }
+
+
 
                                 findViewById(R.id.pointer).setVisibility(View.VISIBLE);
                             }
@@ -505,8 +440,9 @@ public class MainActivity extends Activity implements SensorEventListener {
                     }
                     i++;
                 }
-            }
 
+
+            }
         };
 
         thread.start();
@@ -546,17 +482,17 @@ public class MainActivity extends Activity implements SensorEventListener {
                                 SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(globalcontext);
                                 int oldCounter = sharedPreferences.getInt("signalCounter", 0);
                                 double rssi1 = 0;
-                                double x1 = 0;
-                                double y1 = 0;
-                                double x2 = 0;
-                                double y2 = 0;
-                                double x3 = 0;
-                                double y3 = 0;
-                                double x4 = 0;
-                                double y4 = 0;
                                 double rssi2 = 0;
                                 double rssi3 = 0;
                                 double rssi4 = 0;
+                                double x1 = 0;
+                                double y1 = 0;
+                                double x2 = 4;
+                                double y2 = 0;
+                                double x3 = 0;
+                                double y3 = 4;
+                                double x4 = 4;
+                                double y4 = 4;
 
 
 
@@ -567,19 +503,18 @@ public class MainActivity extends Activity implements SensorEventListener {
 
                                     ArrayList<WiFiData> oldScan = WiFiScanner.getOldWifiList();
                                     ArrayList<WiFiData> newScan = WiFiScanner.getWifiList();
-                                    ArrayList<WiFiData> intersection = new ArrayList<WiFiData>();
 
                                     for(int m=0; m<newScan.size(); m++) {
-                                        if (newScan.get(m).getBSSID().equals("router1")) {
+                                        if (newScan.get(m).getBSSID().equals(linksys)) {
                                             rssi1 = newScan.get(m).getRSS();
                                         }
-                                        if (newScan.get(m).getBSSID().equals("router2")) {
+                                        if (newScan.get(m).getBSSID().equals(netgear)) {
                                             rssi2 = newScan.get(m).getRSS();
                                         }
-                                        if (newScan.get(m).getBSSID().equals("router3")) {
+                                        if (newScan.get(m).getBSSID().equals(fritz)) {
                                             rssi3 = newScan.get(m).getRSS();
                                         }
-                                        if (newScan.get(m).getBSSID().equals("router4")) {
+                                        if (newScan.get(m).getBSSID().equals(technicolor)) {
                                             rssi4 = newScan.get(m).getRSS();
                                         }
                                     }
@@ -599,99 +534,30 @@ public class MainActivity extends Activity implements SensorEventListener {
                                         double newX = (w1e*x1+w2e*x2+w3e*x3+w4e*x4)/(w1e+w2e+w3e+w4e);
                                         double newY =(w1e*y1+w2e*y2+w3e*y3+w4e*y4)/(w1e+w2e+w3e+w4e);
 
-                                    }
+                                        String values = "";
 
-                                    for(int m=0;m<oldScan.size();m++) {
+                                        values += "X: " + newX + "\n";
+                                        values += "Y: " + newY + "\n";
 
-                                        if(oldScan.get(m).getRSS() < -64) {
-                                            continue;
-                                        }
-
-                                        for(int n=0;n<newScan.size();n++) {
-                                            if(oldScan.get(m).getBSSID().equals(newScan.get(n).getBSSID())) {
-                                                intersection.add(oldScan.get(m));
-                                                intersection.add(newScan.get(n));
+                                        for (int j = 0; j < oldScan.size(); j++) {
+                                            values += oldScan.get(j).getSSID() + ", " + oldScan.get(j).getRSS() + "\n";
+                                            String mac = oldScan.get(j).getBSSID();
+                                            if (oldScan.get(j).getBSSID().equals("ce:d1:59:4f:97:f5")) {
+                                                values += "yay" + "\n";
                                             }
                                         }
-                                    }
 
-                                    int totalValues = 0;
-                                    double summarizedDistance = 0;
+                                        values += "-----------\n";
 
-                                    int p = 0;
-                                    while(p < intersection.size()) {
-
-                                        summarizedDistance += Position.getNewDistance(intersection.get(p + 1).getRSS(), intersection.get(p).getRSS(), intersection.get(p).getFrequency());
-
-
-                                        totalValues++;
-                                        p=p+2;
-                                    }
-
-                                    int meanMovedDistanceInPixel = 0;
-                                    float angle = 0;
-
-                                    if(totalValues > 0) {
-                                        double meanMovedDistance = summarizedDistance/totalValues;
-
-                                        angle = currentPosition - sharedPreferences.getFloat("startCompass", (float)0.0);
-                                        if(angle < 0) {
-                                            angle = 360+angle;
+                                        for (int j = 0; j < newScan.size(); j++) {
+                                            double distance = Position.getDistance(newScan.get(j).getRSS(), newScan.get(j).getFrequency());
+                                            values += newScan.get(j).getSSID() + ", " + newScan.get(j).getRSS() + ", " + distance + "\n";
                                         }
 
-
-                                        meanMovedDistanceInPixel = (1080/5) * (int)meanMovedDistance;
-
-
-                                        int posX = sharedPreferences.getInt("posX", 0);
-                                        int posY = sharedPreferences.getInt("posY", 0);
-
-
-                                        if(meanMovedDistanceInPixel != 0) {
-                                            int[] newCoordinates = new int[2];
-                                            newCoordinates = Position.getNewPosition(posX, posY, angle, meanMovedDistanceInPixel);
-
-                                            int newX = newCoordinates[0];
-                                            int newY = newCoordinates[1];
-
-                                            editor.putInt("posX", newX);
-                                            editor.putInt("posY", newY);
-                                            editor.commit();
-
-                                            setPosition(newX, newY);
-                                        } else {
-                                            setPosition(posX, posY);
-                                        }
+                                        Toast.makeText(getApplicationContext(), String.valueOf(values), Toast.LENGTH_SHORT).show();
 
                                     }
 
-
-
-
-
-                                    String values = "";
-
-                                    values += "startangle " + String.valueOf(Math.abs(sharedPreferences.getFloat("startCompass", (float)0.0))) + "\n";
-                                    values += "currentposition " + String.valueOf(currentPosition) + "\n";
-                                    values += "angle " + String.valueOf(angle) + "\n";
-                                    values += String.valueOf(meanMovedDistanceInPixel) + "\n";
-
-                                    for(int j=0;j<oldScan.size();j++) {
-                                        values += oldScan.get(j).getBSSID()+ ", " + oldScan.get(j).getRSS()+"\n";
-                                        String mac = oldScan.get(j).getBSSID();
-                                        if (oldScan.get(j).getBSSID().equals("ce:d1:59:4f:97:f5")) {
-                                            values += "yay" + "\n";
-                                        }
-                                    }
-
-                                    values += "-----------\n";
-
-                                    for(int j=0;j<newScan.size();j++) {
-                                        double distance = Position.getDistance(newScan.get(j).getRSS(),newScan.get(j).getFrequency());
-                                        values += newScan.get(j).getFrequency()+ ", " + newScan.get(j).getRSS()+ ", " + distance + "\n";
-                                    }
-
-                                    Toast.makeText(getApplicationContext(), String.valueOf(values), Toast.LENGTH_SHORT).show();
 
                                 }
 
@@ -863,8 +729,9 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     public void hideUIElements() {
         findViewById(R.id.mapSelector).setVisibility(View.GONE);
-        findViewById(R.id.compassNavi).setVisibility(View.GONE);
+        findViewById(R.id.meansNavi).setVisibility(View.GONE);
         findViewById(R.id.trilatNavi).setVisibility(View.GONE);
+        findViewById(R.id.centroidNavi).setVisibility(View.GONE);
         findViewById(R.id.startNavigation).setVisibility(View.GONE);
         findViewById(R.id.startExit).setVisibility(View.GONE);
     }
